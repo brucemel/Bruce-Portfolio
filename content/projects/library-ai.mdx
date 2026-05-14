@@ -1,0 +1,41 @@
+---
+title: "Library Management System with AI"
+description: "Modernized municipal library system with AI-powered book classification and semantic search, built as a production-ready full-stack application."
+tech: ["Next.js", "TypeScript", "PostgreSQL", "Anthropic API", "Tailwind CSS"]
+github: "https://github.com/brucemel"
+demo: ""
+featured: true
+order: 1
+date: "2024-12-01"
+---
+
+## Overview
+
+This project started as my CSE 341 final project and evolved into a full production-ready application. A traditional library management system was redesigned from scratch with a modern stack and AI capabilities to handle thousands of books with intelligent classification and search.
+
+## The Problem
+
+Municipal library systems often rely on manual cataloging, making it slow to classify new acquisitions and difficult for users to find books by concept rather than exact title or author name. I wanted to solve both problems with a single system.
+
+## What I Built
+
+- **Semantic search**: Users can search by concept ("books about loss and grief") rather than keywords. Queries are vectorized and matched against book embeddings stored in PostgreSQL with pgvector.
+- **AI classification**: When a librarian adds a new book, the Anthropic API analyzes the title, author, and description to auto-suggest Dewey Decimal categories and tags.
+- **Role-based access**: Librarians manage inventory; patrons browse and reserve books. JWT authentication guards the API routes.
+- **Audit trail**: Every checkout, return, and classification change is logged to a separate audit table for accountability.
+
+## Technical Decisions
+
+I chose Next.js App Router for this project because it allowed me to co-locate API routes with UI components and leverage Server Components for data-heavy pages without client-side loading states. PostgreSQL was the natural fit because the relational data model (books ↔ patrons ↔ checkouts) benefits from foreign key constraints and transactions.
+
+The Anthropic API integration uses prompt caching to reduce costs on repeated classification requests — a pattern I learned matters enormously in production where the same authors and genres appear constantly.
+
+## Challenges
+
+The hardest part was designing the vector search. pgvector requires careful index tuning (HNSW vs IVFFlat) and the embedding dimension has to match the model output. I spent significant time benchmarking recall vs. query latency to find the right balance for a library-scale dataset.
+
+## What I Learned
+
+- How to design a multi-tenant schema that separates concerns cleanly
+- Prompt engineering for structured output (JSON classification results)
+- The real cost implications of LLM API calls in production and how caching mitigates them

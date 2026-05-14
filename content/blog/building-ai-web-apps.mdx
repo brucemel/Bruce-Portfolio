@@ -1,0 +1,94 @@
+---
+title: "Building AI-Integrated Web Applications with Next.js and the Anthropic API"
+description: "A practical guide to integrating LLM capabilities into a production Next.js application — from API design to cost management and prompt caching."
+date: "2025-01-15"
+tags: ["Next.js", "AI", "TypeScript", "Anthropic", "Full-Stack"]
+readTime: "8 min read"
+---
+
+When I added AI to my library management system, I expected the hardest part to be the prompt engineering. I was wrong. The hardest part was designing the system so that AI calls are cheap, fast, and predictable in a production environment.
+
+Here's what I learned.
+
+## Start with the API design, not the prompt
+
+Before writing a single prompt, decide what shape of data you need back. The Anthropic API can return free-form text or structured JSON — and once you commit to free-form text in a production system, you're in trouble. Downstream code has to parse it, and LLM output is never perfectly consistent.
+
+Use `tool_use` or a system prompt that forces JSON output:
+
+```typescript
+const response = await anthropic.messages.create({
+  model: "claude-opus-4-7",
+  max_tokens: 1024,
+  system: `You are a library cataloging assistant. Always respond with valid JSON matching this schema:
+    { "dewey": string, "tags": string[], "summary": string }`,
+  messages: [{ role: "user", content: bookDescription }],
+});
+```
+
+Now you can safely parse the response and handle validation errors in one place.
+
+## Prompt caching cuts costs dramatically
+
+The Anthropic API supports prompt caching, which stores the processed form of a prompt prefix on Anthropic's servers. If you send the same prefix again within the TTL, you pay for cache reads instead of full input tokens — roughly 10x cheaper.
+
+For my library system, the system prompt (cataloging instructions + Dewey Decimal reference) is always the same. Marking it as a cache breakpoint means I only pay to process it once per session:
+
+```typescript
+const response = await anthropic.messages.create({
+  model: "claude-opus-4-7",
+  max_tokens: 1024,
+  system: [
+    {
+      type: "text",
+      text: CATALOGING_SYSTEM_PROMPT,
+      cache_control: { type: "ephemeral" },
+    },
+  ],
+  messages: [{ role: "user", content: bookDescription }],
+});
+```
+
+In my testing, this reduced API costs by ~85% for batch classification tasks.
+
+## Put AI calls in Server Actions, not API routes
+
+Next.js Server Actions are a cleaner pattern for AI calls than traditional API routes. They let you call server-side logic directly from a form or button without writing a separate HTTP endpoint.
+
+```typescript
+// app/actions/classify.ts
+"use server";
+import Anthropic from "@anthropic-ai/sdk";
+
+export async function classifyBook(description: string) {
+  const client = new Anthropic();
+  const message = await client.messages.create({
+    model: "claude-opus-4-7",
+    max_tokens: 1024,
+    messages: [{ role: "user", content: description }],
+  });
+  return parseClassification(message.content);
+}
+```
+
+Your API key stays on the server, the call is typed end-to-end, and you get built-in error handling from the Next.js runtime.
+
+## Rate limiting is not optional
+
+LLMs have rate limits, and your users will hit them if you don't protect against it. Add a simple per-user rate limit before any AI call:
+
+- Track requests per user per minute in Redis or an in-memory store
+- Return a friendly error when the limit is exceeded
+- Never let users retry infinitely — add exponential backoff on the client
+
+## The pattern that works
+
+After several iterations, here's the architecture I'd recommend for any AI feature in a Next.js app:
+
+1. **Validate inputs** before sending to the AI — garbage in, garbage out
+2. **Cache deterministic prompts** using the Anthropic cache_control API
+3. **Parse and validate outputs** with a schema library like Zod
+4. **Log every AI call** with cost metrics so you can monitor and optimize
+5. **Set hard limits** on tokens to prevent runaway costs
+
+AI makes applications dramatically more capable, but it requires treating the LLM as a third-party dependency with its own SLA, cost model, and failure modes. Build accordingly.

@@ -1,0 +1,137 @@
+---
+title: "REST API Design Patterns I Learned Building Production Node.js Backends"
+description: "Practical lessons from building two full-stack applications with Express and PostgreSQL — what worked, what didn't, and the patterns I now use by default."
+date: "2024-10-20"
+tags: ["Node.js", "Express", "REST API", "PostgreSQL", "Backend"]
+readTime: "6 min read"
+---
+
+After building CSE Motors and the Library Management System, I've made enough API design mistakes to have strong opinions about what the right patterns look like. Here are the ones that actually matter.
+
+## Structure routes around resources, not actions
+
+Bad:
+```
+POST /createUser
+POST /deleteUser
+POST /getUserById
+```
+
+Good:
+```
+POST   /users
+DELETE /users/:id
+GET    /users/:id
+```
+
+HTTP verbs carry semantic meaning. Using them correctly means your API is partially self-documenting, and any HTTP client (curl, fetch, Postman) will behave predictably.
+
+## Centralize error handling
+
+The single biggest improvement I made to my Express apps was adding a centralized error handler and using it everywhere:
+
+```typescript
+// middleware/errorHandler.ts
+import type { Request, Response, NextFunction } from "express";
+
+export class AppError extends Error {
+  constructor(
+    public statusCode: number,
+    message: string
+  ) {
+    super(message);
+  }
+}
+
+export function errorHandler(
+  err: Error,
+  req: Request,
+  res: Response,
+  _next: NextFunction
+) {
+  const statusCode = err instanceof AppError ? err.statusCode : 500;
+  const message =
+    process.env.NODE_ENV === "production" && statusCode === 500
+      ? "Internal server error"
+      : err.message;
+
+  res.status(statusCode).json({ error: message });
+}
+```
+
+Now any route can `throw new AppError(404, "Vehicle not found")` and the client gets a consistent JSON error shape every time. No more scattered `res.status(500).json({ error: err.message })` leaking implementation details.
+
+## Validate inputs at the boundary
+
+Never trust what comes in from the network. I use a simple validation middleware that rejects bad requests before they reach business logic:
+
+```typescript
+import { z } from "zod";
+
+const CreateVehicleSchema = z.object({
+  make: z.string().min(1).max(50),
+  model: z.string().min(1).max(50),
+  year: z.number().int().min(1900).max(new Date().getFullYear() + 1),
+  price: z.number().positive(),
+});
+
+export function validate(schema: z.ZodSchema) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    const result = schema.safeParse(req.body);
+    if (!result.success) {
+      return res.status(400).json({ error: result.error.flatten() });
+    }
+    req.body = result.data;
+    next();
+  };
+}
+```
+
+Zod gives you TypeScript types for free from the same schema definition. One source of truth for both runtime validation and compile-time types.
+
+## Pagination is not optional
+
+Any endpoint that returns a list needs pagination from day one. Adding it later is a breaking change. I default to cursor-based pagination for lists that can grow unboundedly:
+
+```typescript
+// GET /vehicles?cursor=abc123&limit=20
+const vehicles = await db.query(
+  `SELECT * FROM vehicles WHERE id > $1 ORDER BY id ASC LIMIT $2`,
+  [cursor, limit + 1]  // fetch one extra to determine if there's a next page
+);
+
+const hasNextPage = vehicles.rows.length > limit;
+const data = vehicles.rows.slice(0, limit);
+const nextCursor = hasNextPage ? data[data.length - 1].id : null;
+```
+
+## Use transactions for multi-step writes
+
+Any operation that touches multiple tables should be wrapped in a transaction. I learned this the hard way when a failed checkout left the database in a half-updated state:
+
+```typescript
+const client = await pool.connect();
+try {
+  await client.query("BEGIN");
+  await client.query(insertCheckoutSQL, checkoutValues);
+  await client.query(updateAvailabilitySQL, [bookId]);
+  await client.query("COMMIT");
+} catch (err) {
+  await client.query("ROLLBACK");
+  throw err;
+} finally {
+  client.release();
+}
+```
+
+If the availability update fails after the checkout was inserted, the whole transaction rolls back. The database stays consistent regardless of what goes wrong.
+
+## The pattern I start every project with
+
+1. Set up centralized error handling first
+2. Define resource schemas with Zod
+3. Write validation middleware before route handlers
+4. Use transactions for any multi-table writes
+5. Add pagination to every list endpoint from the start
+
+These aren't advanced techniques — they're table stakes for any API that will be used in production. Starting with them is much easier than retrofitting them.

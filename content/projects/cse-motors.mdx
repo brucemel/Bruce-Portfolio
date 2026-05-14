@@ -1,0 +1,47 @@
+---
+title: "CSE Motors — Full-Stack Car Dealership"
+description: "Complete car dealership management system with JWT authentication, role-based authorization, and full inventory CRUD built with Node.js and PostgreSQL."
+tech: ["Node.js", "Express", "PostgreSQL", "EJS", "JWT"]
+github: "https://github.com/brucemel"
+demo: ""
+featured: true
+order: 2
+date: "2024-08-01"
+---
+
+## Overview
+
+Built as the capstone project for CSE 340 (Web Backend Development), CSE Motors is a multi-user dealership platform where administrators manage vehicle inventory and clients browse listings. The project covers the full backend lifecycle: database design, server-side rendering, authentication, and authorization.
+
+## Features
+
+- **Inventory management**: Full CRUD for vehicle listings with image upload, pricing, and categorization by vehicle type.
+- **JWT authentication**: Stateless auth with access tokens stored in HTTP-only cookies to prevent XSS.
+- **Role-based authorization**: Middleware checks user roles on every protected route — admins can edit inventory, clients can only browse and inquire.
+- **Server-side rendering with EJS**: All pages are rendered on the server, keeping the client lightweight and improving SEO.
+- **PostgreSQL with parameterized queries**: Every database interaction uses prepared statements to prevent SQL injection.
+
+## Architecture
+
+The project follows the MVC pattern:
+
+- **Models**: Pure SQL functions that interact with PostgreSQL — no ORM, so I had to write and optimize queries manually.
+- **Controllers**: Express route handlers that call models and pass data to views.
+- **Views**: EJS templates with partials for shared layout components.
+
+This setup forced me to understand exactly what the database was doing at every step, which gave me a strong foundation in query optimization.
+
+## Security Measures
+
+Security was a primary requirement for this project:
+
+- Passwords hashed with bcrypt (12 rounds)
+- Input validated and sanitized server-side before any DB interaction
+- CSRF protection on state-changing forms
+- Error messages that don't leak implementation details to users
+
+## What I Learned
+
+- Writing raw SQL gave me an appreciation for what ORMs abstract away — and when that abstraction is costly
+- Role-based middleware design: how to keep authorization logic centralized and testable
+- The difference between authentication (who are you?) and authorization (what can you do?)

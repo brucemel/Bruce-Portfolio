@@ -1,65 +1,172 @@
-import Image from "next/image";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
+import { Hero } from "@/components/Hero";
+import { ProjectCard } from "@/components/ProjectCard";
+import { TechStack } from "@/components/TechStack";
+import { BlogPostCard } from "@/components/BlogPostCard";
+import { SectionReveal } from "@/components/SectionReveal";
+import { getFeaturedProjects } from "@/lib/projects";
+import { getLatestBlogPosts } from "@/lib/blog";
 
-export default function Home() {
+export default function HomePage() {
+  const projects = getFeaturedProjects();
+  const posts = getLatestBlogPosts(2);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <>
+      <Hero />
+
+      {/* Featured Projects */}
+      <section className="max-w-5xl mx-auto px-6 py-20">
+        <SectionReveal>
+          <div className="flex items-center justify-between mb-10">
+            <div>
+              <h2 className="text-2xl font-bold text-[var(--fg)] mb-1">
+                Featured Projects
+              </h2>
+              <p className="text-sm text-[var(--muted)]">
+                Things I&apos;ve built and what I learned from them
+              </p>
+            </div>
+            <Link
+              href="/projects"
+              className="hidden sm:inline-flex items-center gap-1.5 text-sm text-[var(--accent)] hover:gap-3 transition-all font-medium"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+              All projects <ArrowRight size={14} />
+            </Link>
+          </div>
+        </SectionReveal>
+
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {projects.map((project, i) => (
+            <SectionReveal key={project.slug} delay={i * 0.08}>
+              <ProjectCard project={project} />
+            </SectionReveal>
+          ))}
+        </div>
+
+        <SectionReveal className="mt-6 sm:hidden">
+          <Link
+            href="/projects"
+            className="inline-flex items-center gap-1.5 text-sm text-[var(--accent)] font-medium"
+          >
+            All projects <ArrowRight size={14} />
+          </Link>
+        </SectionReveal>
+      </section>
+
+      {/* Tech Stack */}
+      <section className="max-w-5xl mx-auto px-6 py-16 border-t border-[var(--border)]">
+        <SectionReveal>
+          <h2 className="text-2xl font-bold text-[var(--fg)] mb-2">
+            Tech Stack
+          </h2>
+          <p className="text-sm text-[var(--muted)] mb-8">
+            Technologies I work with daily
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+          <TechStack />
+        </SectionReveal>
+      </section>
+
+      {/* About Preview */}
+      <section className="max-w-5xl mx-auto px-6 py-16 border-t border-[var(--border)]">
+        <SectionReveal>
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div>
+              <h2 className="text-2xl font-bold text-[var(--fg)] mb-4">
+                About Me
+              </h2>
+              <p className="text-[var(--muted)] leading-relaxed mb-4">
+                I&apos;m a software development student at BYU-Idaho (online),
+                based in Trujillo, Peru. I started with vanilla JavaScript and
+                worked my way through backend systems with Node.js and Express,
+                then forward to modern full-stack development with Next.js and
+                TypeScript.
+              </p>
+              <p className="text-[var(--muted)] leading-relaxed mb-6">
+                I&apos;m particularly interested in the intersection of AI and
+                web development — building applications that feel intelligent
+                without sacrificing reliability or performance.
+              </p>
+              <Link
+                href="/about"
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--accent)] hover:gap-3 transition-all"
+              >
+                Read my story <ArrowRight size={14} />
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              {[
+                { label: "Next.js + TypeScript", sub: "Primary stack" },
+                { label: "Node.js + Express", sub: "REST APIs" },
+                { label: "PostgreSQL + MongoDB", sub: "Databases" },
+                { label: "Anthropic API", sub: "AI integration" },
+              ].map(({ label, sub }) => (
+                <div
+                  key={label}
+                  className="p-4 rounded-xl border border-[var(--border)] bg-[var(--surface)]"
+                >
+                  <p className="text-sm font-medium text-[var(--fg)] mb-0.5">
+                    {label}
+                  </p>
+                  <p className="text-xs text-[var(--muted)]">{sub}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </SectionReveal>
+      </section>
+
+      {/* Latest Posts */}
+      {posts.length > 0 && (
+        <section className="max-w-5xl mx-auto px-6 py-16 border-t border-[var(--border)]">
+          <SectionReveal>
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h2 className="text-2xl font-bold text-[var(--fg)] mb-1">
+                  Latest Writing
+                </h2>
+                <p className="text-sm text-[var(--muted)]">
+                  Notes on what I&apos;m building and learning
+                </p>
+              </div>
+              <Link
+                href="/blog"
+                className="hidden sm:inline-flex items-center gap-1.5 text-sm text-[var(--accent)] font-medium hover:gap-3 transition-all"
+              >
+                All posts <ArrowRight size={14} />
+              </Link>
+            </div>
+            <div className="max-w-2xl">
+              {posts.map((post) => (
+                <BlogPostCard key={post.slug} post={post} />
+              ))}
+            </div>
+          </SectionReveal>
+        </section>
+      )}
+
+      {/* Contact CTA */}
+      <section className="max-w-5xl mx-auto px-6 py-20 border-t border-[var(--border)]">
+        <SectionReveal>
+          <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-10 text-center">
+            <h2 className="text-2xl font-bold text-[var(--fg)] mb-3">
+              Open to opportunities
+            </h2>
+            <p className="text-[var(--muted)] mb-8 max-w-md mx-auto">
+              I&apos;m actively looking for remote full-stack roles at US
+              companies. If you&apos;re building something interesting,
+              let&apos;s talk.
+            </p>
+            <Link
+              href="/contact"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-[var(--accent)] text-white font-medium text-sm hover:opacity-90 transition-opacity"
+            >
+              Get In Touch <ArrowRight size={15} />
+            </Link>
+          </div>
+        </SectionReveal>
+      </section>
+    </>
   );
 }

@@ -1,0 +1,41 @@
+---
+title: "Sleep Outside — E-commerce Frontend"
+description: "Camping gear e-commerce site with dynamic product listings, shopping cart, and checkout flow built with Vanilla JavaScript and Vite."
+tech: ["JavaScript", "Vite", "HTML", "CSS", "REST API"]
+github: "https://github.com/brucemel"
+demo: ""
+featured: true
+order: 3
+date: "2024-05-01"
+---
+
+## Overview
+
+Sleep Outside is a fully functional e-commerce frontend for camping gear, built without any JavaScript frameworks. Developed during WDD 330, the project challenged me to implement everything from scratch — routing, state management, DOM manipulation, and API integration — using only vanilla JavaScript and modern browser APIs.
+
+## Features
+
+- **Dynamic product catalog**: Products fetched from a REST API and rendered client-side with filtering by category.
+- **Shopping cart**: Cart state persisted in `localStorage` so it survives page refreshes. Items can be added, removed, and quantity-adjusted.
+- **Checkout flow**: Multi-step checkout with form validation at each step before proceeding.
+- **Product detail pages**: Dynamic pages generated from URL parameters — no server routing, pure client-side navigation.
+- **Responsive design**: Mobile-first CSS with a layout that works across all screen sizes.
+
+## Technical Highlights
+
+**No framework, no shortcuts.** Every feature that React or Vue handles automatically — reactive state, conditional rendering, list rendering — I implemented manually. This gave me a deep understanding of what frameworks actually do.
+
+**Vite for tooling.** Using Vite as the build tool meant I could write modern ES modules with HMR during development and get an optimized bundle for production — without Webpack configuration overhead.
+
+**Async/await throughout.** API calls use the Fetch API with async/await and proper error handling. I also implemented a simple request cache to avoid redundant API calls on the same product data within a session.
+
+## Why This Project Matters
+
+Before learning React and Next.js, I built this. The experience of managing application state without a framework made me genuinely appreciate React's reactivity model and understand exactly what problems it solves. When something breaks in a React app now, I know where to look.
+
+## What I Learned
+
+- DOM manipulation at scale gets messy fast — frameworks solve a real problem
+- `localStorage` as a persistence layer has real tradeoffs (size limits, no cross-tab sync)
+- How to structure vanilla JS into modules to keep it maintainable
+- The value of a good build tool even for simple projects
